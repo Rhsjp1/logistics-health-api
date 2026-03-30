@@ -1,0 +1,30 @@
+{
+  "version": 2,
+  "builds": [
+    { "src": "api/*.js", "use": "@vercel/node" },
+    { "src": "*.html", "use": "@vercel/static" }
+  ],
+  "routes": [
+    { "src": "/api/(.*)", "dest": "/api/$1" },
+    { "src": "/(.*\\.html)", "dest": "/$1" }
+  ]
+}
+```
+
+---
+
+## Step 2 — Commit everything
+
+In github.dev click the **Source Control** icon (left sidebar) → type `add vercel config` → click **Commit & Push**
+
+---
+
+## Step 3 — Wait for Vercel to auto-redeploy
+
+Vercel detects the push and rebuilds automatically in ~60 seconds. Watch the **Deployments** tab until it says **Ready**.
+
+---
+
+## Step 4 — Test
+```
+https://logistics-health-api-9mmt.vercel.app/dashboard.html
