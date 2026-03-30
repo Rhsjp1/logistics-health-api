@@ -10,7 +10,7 @@
 // and breakdown by weather, congestion, and port health.
 // ============================================================
 
-import { createClient } from "@supabase/supabase-js";
+const { createClient } = require("@supabase/supabase-js")";
 
 // --- Supabase Setup ---
 // These values come from your Vercel environment variables.
@@ -138,7 +138,7 @@ async function saveToDatabase(record) {
 // MAIN HANDLER
 // This is what Vercel calls when someone hits /api/scr
 // ============================================================
-export default async function handler(req, res) {
+module.exports = async function handler(req, res) {
   // Allow cross-origin requests (so a frontend can call this)
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "GET, OPTIONS");
