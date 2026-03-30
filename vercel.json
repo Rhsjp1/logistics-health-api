@@ -1,14 +1,3 @@
 {
   "version": 2
 }
-```
-
-5. **Commit changes** → **Commit directly to main**
-
----
-
-That's the entire file — just 3 lines. Vercel automatically detects anything in the `api/` folder as a serverless function without needing to tell it. The old config was actually overriding that auto-detection and breaking it.
-
-Wait 60 seconds for redeploy, then test:
-```
-https://logistics-health-api-9mmt.vercel.app/api/scr?origin=PHL&dest=LAX&mode=trucking
