@@ -9,28 +9,4 @@
     { "src": "/(.*\\.html)", "dest": "/$1" }
   ]
 }
-```
 
----
-
-## Your repo should now have exactly these files:
-```
-logistics-health-api/
-├── api/
-│   └── scr.js          ✅ already there
-├── package.json        ✅ already there
-├── .env.example        ✅ already there
-├── dashboard.html      ✅ already there
-├── vercel.json         ← ADD THIS NOW
-└── README.md           ✅ already there
-```
-
----
-
-## Then:
-
-1. **Commit & Push** in github.dev → type `add vercel config` → Commit & Push
-2. Watch Vercel **Deployments** tab — wait for **Ready**
-3. Visit:
-```
-https://logistics-health-api-9mmt.vercel.app/dashboard.html
