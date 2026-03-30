@@ -11,20 +11,8 @@
 }
 ```
 
----
+6. Click **Source Control** (left sidebar) → type `update vercel config` → **Commit & Push**
 
-## Step 2 — Commit everything
-
-In github.dev click the **Source Control** icon (left sidebar) → type `add vercel config` → click **Commit & Push**
-
----
-
-## Step 3 — Wait for Vercel to auto-redeploy
-
-Vercel detects the push and rebuilds automatically in ~60 seconds. Watch the **Deployments** tab until it says **Ready**.
-
----
-
-## Step 4 — Test
+Then wait ~60 seconds for Vercel to redeploy and test:
 ```
 https://logistics-health-api-9mmt.vercel.app/dashboard.html
