@@ -9,16 +9,23 @@ export default async function handler(req, res) {
       });
     }
 
+    // Temporary static values; later you’ll compute these
+    const scr_score = 74;
+    const origin_weather_score = 84;
+    const dest_weather_score = 78;
+    const mode_baseline_score = 68;
+
     return res.status(200).json({
       ok: true,
       origin,
       dest,
       mode,
-      scr_score: 74,
-      weather_score: 84,
-      traffic_score: 68,
-      port_score: 64,
-      risk_band: "Moderate Stress"
+      scr_score,
+      breakdown: {
+        origin_weather_score,
+        dest_weather_score,
+        mode_baseline_score
+      }
     });
   } catch (err) {
     return res.status(500).json({
