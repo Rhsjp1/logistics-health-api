@@ -1,257 +1,10 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Logistics Health API — SCR Dashboard</title>
-  <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    :root {
-      --bg: #f9f9f8; --surface: #ffffff; --border: rgba(0,0,0,0.1);
-      --text: #1a1a18; --muted: #6b6b67; --radius: 10px;
-      --green: #22c55e; --lime: #84cc16; --yellow: #eab308;
-      --orange: #f97316; --red: #ef4444;
-    }
-    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; padding: 0; }
-    nav { background: var(--surface); border-bottom: 0.5px solid var(--border); padding: 0 2rem; height: 56px; display: flex; align-items: center; justify-content: space-between; }
-    nav .brand { font-size: 15px; font-weight: 500; }
-    nav .brand span { color: var(--muted); font-weight: 400; }
-    nav .status { font-size: 12px; color: var(--muted); display: flex; align-items: center; gap: 6px; }
-    nav .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--green); }
-    main { max-width: 900px; margin: 0 auto; padding: 2rem 1.5rem; }
-    .controls { background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--radius); padding: 1.25rem; display: grid; grid-template-columns: 1fr 1fr 1fr auto; gap: 12px; align-items: end; margin-bottom: 1.5rem; }
-    .ctrl-group label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 5px; }
-    select { width: 100%; height: 38px; padding: 0 10px; border: 0.5px solid var(--border); border-radius: 7px; background: var(--surface); color: var(--text); font-size: 14px; appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236b6b67' d='M6 8L1 3h10z'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 10px center; cursor: pointer; }
-    button { height: 38px; padding: 0 20px; background: var(--text); color: #fff; border: none; border-radius: 7px; font-size: 14px; font-weight: 500; cursor: pointer; white-space: nowrap; transition: opacity 0.15s; }
-    button:hover { opacity: 0.85; }
-    button:disabled { opacity: 0.5; cursor: not-allowed; }
-    .score-card { background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--radius); padding: 1.5rem; display: flex; align-items: center; gap: 1.5rem; margin-bottom: 1rem; }
-    .score-ring { flex-shrink: 0; }
-    .score-info .score-tier { font-size: 15px; font-weight: 500; margin-bottom: 4px; }
-    .score-info .score-lane { font-size: 13px; color: var(--muted); }
-    .score-info .score-note { font-size: 12px; color: var(--muted); margin-top: 10px; }
-    .breakdown { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 1.5rem; }
-    .bcard { background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--radius); padding: 1rem; }
-    .bcard .blabel { font-size: 12px; color: var(--muted); margin-bottom: 6px; }
-    .bcard .bval { font-size: 24px; font-weight: 500; }
-    .bcard .bbar { height: 4px; border-radius: 2px; background: var(--border); margin-top: 10px; overflow: hidden; }
-    .bcard .bfill { height: 100%; border-radius: 2px; transition: width 0.7s ease; }
-    .history { background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--radius); overflow: hidden; }
-    .hist-header { display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; border-bottom: 0.5px solid var(--border); }
-    .hist-header h3 { font-size: 13px; font-weight: 500; }
-    .hist-row { display: grid; grid-template-columns: 1fr 1fr 1fr 80px 100px; gap: 8px; padding: 10px 16px; border-bottom: 0.5px solid var(--border); font-size: 13px; align-items: center; }
-    .hist-row:last-child { border-bottom: none; }
-    .hist-head { background: var(--bg); font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; }
-    .pill { display: inline-block; padding: 2px 10px; border-radius: 100px; font-size: 11px; font-weight: 500; }
-    .placeholder { padding: 3rem; text-align: center; color: var(--muted); font-size: 14px; }
-    .api-notice { font-size: 12px; color: var(--muted); margin-top: 1rem; padding: 10px 14px; background: var(--surface); border: 0.5px solid var(--border); border-radius: 7px; }
-    optgroup { font-weight: 600; }
-    @media (max-width: 600px) {
-      .controls { grid-template-columns: 1fr 1fr; }
-      .controls button { grid-column: span 2; }
-      .breakdown { grid-template-columns: 1fr; }
-      .hist-row { grid-template-columns: 1fr 1fr 1fr 70px; }
-      .hist-row .hist-mode { display: none; }
-    }
-  </style>
-</head>
-<body>
-<nav>
-  <div class="brand">Logistics Health API <span>/ SCR Dashboard</span></div>
-  <div class="status"><div class="dot"></div> Live</div>
-</nav>
-<main>
-  <div class="controls">
-    <div class="ctrl-group">
-      <label>Origin</label>
-      <select id="origin">
-        <optgroup label="── Northeast ──">
-          <option value="BOS">BOS — Boston, MA</option>
-          <option value="JFK">JFK — New York, NY</option>
-          <option value="PHL">PHL — Philadelphia, PA</option>
-          <option value="BWI">BWI — Baltimore, MD</option>
-          <option value="DCA">DCA — Washington, DC</option>
-          <option value="BDL">BDL — Hartford, CT</option>
-          <option value="PVD">PVD — Providence, RI</option>
-          <option value="BUF">BUF — Buffalo, NY</option>
-          <option value="ALB">ALB — Albany, NY</option>
-          <option value="PWM">PWM — Portland, ME</option>
-        </optgroup>
-        <optgroup label="── Southeast ──">
-          <option value="ATL">ATL — Atlanta, GA</option>
-          <option value="MIA">MIA — Miami, FL</option>
-          <option value="TPA">TPA — Tampa, FL</option>
-          <option value="MCO">MCO — Orlando, FL</option>
-          <option value="JAX">JAX — Jacksonville, FL</option>
-          <option value="CLT">CLT — Charlotte, NC</option>
-          <option value="RDU">RDU — Raleigh, NC</option>
-          <option value="CHS">CHS — Charleston, SC</option>
-          <option value="SAV">SAV — Savannah, GA</option>
-          <option value="BHM">BHM — Birmingham, AL</option>
-          <option value="MSY">MSY — New Orleans, LA</option>
-          <option value="MEM">MEM — Memphis, TN</option>
-          <option value="BNA">BNA — Nashville, TN</option>
-          <option value="RIC">RIC — Richmond, VA</option>
-        </optgroup>
-        <optgroup label="── Midwest ──">
-          <option value="ORD">ORD — Chicago, IL</option>
-          <option value="DTW">DTW — Detroit, MI</option>
-          <option value="CLE">CLE — Cleveland, OH</option>
-          <option value="CMH">CMH — Columbus, OH</option>
-          <option value="CVG">CVG — Cincinnati, OH</option>
-          <option value="IND">IND — Indianapolis, IN</option>
-          <option value="MKE">MKE — Milwaukee, WI</option>
-          <option value="MSP">MSP — Minneapolis, MN</option>
-          <option value="STL">STL — St. Louis, MO</option>
-          <option value="MCI">MCI — Kansas City, MO</option>
-          <option value="OMA">OMA — Omaha, NE</option>
-          <option value="DSM">DSM — Des Moines, IA</option>
-        </optgroup>
-        <optgroup label="── South Central ──">
-          <option value="DFW">DFW — Dallas, TX</option>
-          <option value="HOU">HOU — Houston, TX</option>
-          <option value="SAT">SAT — San Antonio, TX</option>
-          <option value="AUS">AUS — Austin, TX</option>
-          <option value="ELP">ELP — El Paso, TX</option>
-          <option value="OKC">OKC — Oklahoma City, OK</option>
-          <option value="TUL">TUL — Tulsa, OK</option>
-          <option value="LIT">LIT — Little Rock, AR</option>
-        </optgroup>
-        <optgroup label="── Mountain / Southwest ──">
-          <option value="DEN">DEN — Denver, CO</option>
-          <option value="PHX">PHX — Phoenix, AZ</option>
-          <option value="TUS">TUS — Tucson, AZ</option>
-          <option value="ABQ">ABQ — Albuquerque, NM</option>
-          <option value="SLC">SLC — Salt Lake City, UT</option>
-          <option value="LAS">LAS — Las Vegas, NV</option>
-          <option value="BOI">BOI — Boise, ID</option>
-          <option value="COS">COS — Colorado Springs, CO</option>
-        </optgroup>
-        <optgroup label="── West Coast ──">
-          <option value="LAX">LAX — Los Angeles, CA</option>
-          <option value="SFO">SFO — San Francisco, CA</option>
-          <option value="SAN">SAN — San Diego, CA</option>
-          <option value="SJC">SJC — San Jose, CA</option>
-          <option value="SMF">SMF — Sacramento, CA</option>
-          <option value="SEA">SEA — Seattle, WA</option>
-          <option value="PDX">PDX — Portland, OR</option>
-          <option value="ANC">ANC — Anchorage, AK</option>
-          <option value="HNL">HNL — Honolulu, HI</option>
-        </optgroup>
-      </select>
-    </div>
-    <div class="ctrl-group">
-      <label>Destination</label>
-      <select id="dest">
-        <optgroup label="── Northeast ──">
-          <option value="BOS">BOS — Boston, MA</option>
-          <option value="JFK">JFK — New York, NY</option>
-          <option value="PHL">PHL — Philadelphia, PA</option>
-          <option value="BWI">BWI — Baltimore, MD</option>
-          <option value="DCA">DCA — Washington, DC</option>
-          <option value="BDL">BDL — Hartford, CT</option>
-          <option value="PVD">PVD — Providence, RI</option>
-          <option value="BUF">BUF — Buffalo, NY</option>
-          <option value="ALB">ALB — Albany, NY</option>
-          <option value="PWM">PWM — Portland, ME</option>
-        </optgroup>
-        <optgroup label="── Southeast ──">
-          <option value="ATL">ATL — Atlanta, GA</option>
-          <option value="MIA">MIA — Miami, FL</option>
-          <option value="TPA">TPA — Tampa, FL</option>
-          <option value="MCO">MCO — Orlando, FL</option>
-          <option value="JAX">JAX — Jacksonville, FL</option>
-          <option value="CLT">CLT — Charlotte, NC</option>
-          <option value="RDU">RDU — Raleigh, NC</option>
-          <option value="CHS">CHS — Charleston, SC</option>
-          <option value="SAV">SAV — Savannah, GA</option>
-          <option value="BHM">BHM — Birmingham, AL</option>
-          <option value="MSY">MSY — New Orleans, LA</option>
-          <option value="MEM">MEM — Memphis, TN</option>
-          <option value="BNA">BNA — Nashville, TN</option>
-          <option value="RIC">RIC — Richmond, VA</option>
-        </optgroup>
-        <optgroup label="── Midwest ──">
-          <option value="ORD">ORD — Chicago, IL</option>
-          <option value="DTW">DTW — Detroit, MI</option>
-          <option value="CLE">CLE — Cleveland, OH</option>
-          <option value="CMH">CMH — Columbus, OH</option>
-          <option value="CVG">CVG — Cincinnati, OH</option>
-          <option value="IND">IND — Indianapolis, IN</option>
-          <option value="MKE">MKE — Milwaukee, WI</option>
-          <option value="MSP">MSP — Minneapolis, MN</option>
-          <option value="STL">STL — St. Louis, MO</option>
-          <option value="MCI">MCI — Kansas City, MO</option>
-          <option value="OMA">OMA — Omaha, NE</option>
-          <option value="DSM">DSM — Des Moines, IA</option>
-        </optgroup>
-        <optgroup label="── South Central ──">
-          <option value="DFW">DFW — Dallas, TX</option>
-          <option value="HOU">HOU — Houston, TX</option>
-          <option value="SAT">SAT — San Antonio, TX</option>
-          <option value="AUS">AUS — Austin, TX</option>
-          <option value="ELP">ELP — El Paso, TX</option>
-          <option value="OKC">OKC — Oklahoma City, OK</option>
-          <option value="TUL">TUL — Tulsa, OK</option>
-          <option value="LIT">LIT — Little Rock, AR</option>
-        </optgroup>
-        <optgroup label="── Mountain / Southwest ──">
-          <option value="DEN">DEN — Denver, CO</option>
-          <option value="PHX">PHX — Phoenix, AZ</option>
-          <option value="TUS">TUS — Tucson, AZ</option>
-          <option value="ABQ">ABQ — Albuquerque, NM</option>
-          <option value="SLC">SLC — Salt Lake City, UT</option>
-          <option value="LAS">LAS — Las Vegas, NV</option>
-          <option value="BOI">BOI — Boise, ID</option>
-          <option value="COS">COS — Colorado Springs, CO</option>
-        </optgroup>
-        <optgroup label="── West Coast ──">
-          <option value="LAX">LAX — Los Angeles, CA</option>
-          <option value="SFO">SFO — San Francisco, CA</option>
-          <option value="SAN">SAN — San Diego, CA</option>
-          <option value="SJC">SJC — San Jose, CA</option>
-          <option value="SMF">SMF — Sacramento, CA</option>
-          <option value="SEA">SEA — Seattle, WA</option>
-          <option value="PDX">PDX — Portland, OR</option>
-          <option value="ANC">ANC — Anchorage, AK</option>
-          <option value="HNL">HNL — Honolulu, HI</option>
-        </optgroup>
-      </select>
-    </div>
-    <div class="ctrl-group">
-      <label>Mode</label>
-      <select id="mode">
-        <option value="trucking">Trucking</option>
-        <option value="rail">Rail</option>
-        <option value="air">Air</option>
-        <option value="ocean">Ocean</option>
-        <option value="intermodal">Intermodal</option>
-      </select>
-    </div>
-    <button id="run-btn" onclick="runScore()">Score lane</button>
-  </div>
- 
-  <div id="result-area">
-    <div class="placeholder">Select a lane above and click Score lane</div>
-  </div>
- 
-  <div class="history">
-    <div class="hist-header"><h3>Score history</h3></div>
-    <div id="hist-body"><div class="placeholder">No scores yet</div></div>
-  </div>
- 
-  <div class="api-notice">
-    <strong>Connected to:</strong> <span id="api-url"></span>
-  </div>
-</main>
- 
 <script>
   const API_BASE_URL = "https://logistics-health-api-9mmt.vercel.app";
   const history = [];
- 
+
   document.getElementById("api-url").textContent = API_BASE_URL + "/api/scr";
   document.getElementById("api-url").style.color = "#22c55e";
- 
+
   function getTierInfo(score) {
     if (score >= 85) return { label: "Excellent", color: "#22c55e", pill: "#dcfce7", pillText: "#166534" };
     if (score >= 70) return { label: "Good",      color: "#84cc16", pill: "#ecfccb", pillText: "#3f6212" };
@@ -259,32 +12,32 @@
     if (score >= 40) return { label: "At Risk",   color: "#f97316", pill: "#ffedd5", pillText: "#7c2d12" };
     return               { label: "Critical",    color: "#ef4444", pill: "#fee2e2", pillText: "#7f1d1d" };
   }
- 
+
   function barColor(val) {
     if (val >= 80) return "#22c55e";
     if (val >= 65) return "#84cc16";
     if (val >= 50) return "#eab308";
     return "#ef4444";
   }
- 
+
   async function fetchLiveScore(origin, dest, mode) {
     const url = `${API_BASE_URL}/api/scr?origin=${origin}&dest=${dest}&mode=${mode}`;
     const res = await fetch(url);
     if (!res.ok) throw new Error("API returned " + res.status);
     return res.json();
   }
- 
+
   async function runScore() {
     const origin = document.getElementById("origin").value;
     const dest   = document.getElementById("dest").value;
     const mode   = document.getElementById("mode").value;
     const btn    = document.getElementById("run-btn");
- 
+
     if (origin === dest) { alert("Origin and destination must be different."); return; }
- 
+
     btn.disabled = true;
     btn.textContent = "Scoring...";
- 
+
     let data;
     try {
       data = await fetchLiveScore(origin, dest, mode);
@@ -294,17 +47,18 @@
       btn.textContent = "Score lane";
       return;
     }
- 
+
     btn.disabled = false;
     btn.textContent = "Score lane";
- 
+
     const score = data.scr_score;
     const tier  = getTierInfo(score);
     const bd    = data.breakdown;
+    const comp  = data.components;
     const pct   = (score / 100) * 251.2;
     const originText = document.getElementById("origin").selectedOptions[0].text;
     const destText   = document.getElementById("dest").selectedOptions[0].text;
- 
+
     document.getElementById("result-area").innerHTML = `
       <div class="score-card">
         <div class="score-ring">
@@ -327,24 +81,37 @@
         <div class="bcard">
           <div class="blabel">Origin weather score</div>
           <div class="bval" style="color:${barColor(bd.origin_weather_score)}">${bd.origin_weather_score}</div>
-          <div class="bbar"><div class="bfill" style="width:${bd.origin_weather_score}%;background:${barColor(bd.origin_weather_score)}"></div></div>
+          <div class="bbar">
+            <div class="bfill" style="width:${bd.origin_weather_score}%;background:${barColor(bd.origin_weather_score)}"></div>
+          </div>
         </div>
         <div class="bcard">
           <div class="blabel">Destination weather score</div>
           <div class="bval" style="color:${barColor(bd.dest_weather_score)}">${bd.dest_weather_score}</div>
-          <div class="bbar"><div class="bfill" style="width:${bd.dest_weather_score}%;background:${barColor(bd.dest_weather_score)}"></div></div>
+          <div class="bbar">
+            <div class="bfill" style="width:${bd.dest_weather_score}%;background:${barColor(bd.dest_weather_score)}"></div>
+          </div>
+        </div>
+        <div class="bcard">
+          <div class="blabel">Route efficiency</div>
+          <div class="bval" style="color:${barColor(comp.traffic.score)}">${comp.traffic.score}</div>
+          <div class="bbar">
+            <div class="bfill" style="width:${comp.traffic.score}%;background:${barColor(comp.traffic.score)}"></div>
+          </div>
         </div>
         <div class="bcard">
           <div class="blabel">Mode baseline score</div>
           <div class="bval" style="color:${barColor(bd.mode_baseline_score)}">${bd.mode_baseline_score}</div>
-          <div class="bbar"><div class="bfill" style="width:${bd.mode_baseline_score}%;background:${barColor(bd.mode_baseline_score)}"></div></div>
+          <div class="bbar">
+            <div class="bfill" style="width:${bd.mode_baseline_score}%;background:${barColor(bd.mode_baseline_score)}"></div>
+          </div>
         </div>
       </div>`;
- 
+
     history.unshift({ origin, dest, mode, score, tier, time: new Date().toLocaleTimeString() });
     renderHistory();
   }
- 
+
   function renderHistory() {
     const body = document.getElementById("hist-body");
     if (!history.length) { body.innerHTML = '<div class="placeholder">No scores yet</div>'; return; }
@@ -361,5 +128,3 @@
       </div>`).join("");
   }
 </script>
-</body>
-</html>
