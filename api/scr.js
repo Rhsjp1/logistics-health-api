@@ -1,10 +1,5 @@
 const { createClient } = require("@supabase/supabase-js");
 
-const supabase = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_KEY
-);
-
 const CITY_COORDS = {
   PHL: { lat: 39.95,  lon: -75.17,  name: "Philadelphia, PA" },
   LAX: { lat: 33.94,  lon: -118.40, name: "Los Angeles, CA"  },
@@ -67,6 +62,10 @@ function getScoreLabel(score) {
 
 async function saveToDatabase(record) {
   try {
+    const supabase = createClient(
+      process.env.SUPABASE_URL,
+      process.env.SUPABASE_SERVICE_KEY
+    );
     const { error } = await supabase.from("lane_scores").insert([record]);
     if (error) console.error("Supabase insert error:", error.message);
   } catch (err) {
