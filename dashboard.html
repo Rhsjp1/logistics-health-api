@@ -7,10 +7,10 @@
 
   function getTierInfo(score) {
     if (score >= 85) return { label: "Excellent", color: "#22c55e", pill: "#dcfce7", pillText: "#166534" };
-    if (score >= 70) return { label: "Good",      color: "#84cc16", pill: "#ecfccb", pillText: "#3f6212" };
-    if (score >= 55) return { label: "Fair",      color: "#eab308", pill: "#fef9c3", pillText: "#713f12" };
-    if (score >= 40) return { label: "At Risk",   color: "#f97316", pill: "#ffedd5", pillText: "#7c2d12" };
-    return               { label: "Critical",    color: "#ef4444", pill: "#fee2e2", pillText: "#7f1d1d" };
+    if (score >= 70) return { label: "Good", color: "#84cc16", pill: "#ecfccb", pillText: "#3f6212" };
+    if (score >= 55) return { label: "Fair", color: "#eab308", pill: "#fef9c3", pillText: "#713f12" };
+    if (score >= 40) return { label: "At Risk", color: "#f97316", pill: "#ffedd5", pillText: "#7c2d12" };
+    return { label: "Critical", color: "#ef4444", pill: "#fee2e2", pillText: "#7f1d1d" };
   }
 
   function barColor(val) {
@@ -29,9 +29,9 @@
 
   async function runScore() {
     const origin = document.getElementById("origin").value;
-    const dest   = document.getElementById("dest").value;
-    const mode   = document.getElementById("mode").value;
-    const btn    = document.getElementById("run-btn");
+    const dest = document.getElementById("dest").value;
+    const mode = document.getElementById("mode").value;
+    const btn = document.getElementById("run-btn");
 
     if (origin === dest) {
       alert("Origin and destination must be different.");
@@ -55,22 +55,24 @@
     btn.textContent = "Score lane";
 
     const score = data.scr_score;
-    const tier  = getTierInfo(score);
-    const bd    = data.breakdown;
-    const comp  = data.components;
-    const pct   = (score / 100) * 251.2;
+    const tier = getTierInfo(score);
+    const bd = data.breakdown;
+    const comp = data.components;
+    const pct = (score / 100) * 251.2;
     const originText = document.getElementById("origin").selectedOptions[0].text;
-    const destText   = document.getElementById("dest").selectedOptions[0].text;
+    const destText = document.getElementById("dest").selectedOptions[0].text;
 
     document.getElementById("result-area").innerHTML = `
       <div class="score-card">
         <div class="score-ring">
           <svg width="90" height="90" viewBox="0 0 90 90">
-            <circle cx="45" cy="45" r="40" fill="none" stroke="#f0f0ee" stroke-width="7"/>
+            <circle cx="45" cy="45" r="40" fill="none" stroke="#f0f0ee" stroke-width="7"></circle>
             <circle cx="45" cy="45" r="40" fill="none" stroke="${tier.color}" stroke-width="7"
-              stroke-dasharray="${pct} 251.2" stroke-dashoffset="62.8"
-              stroke-linecap="round" transform="rotate(-90 45 45)"
-              style="transition: stroke-dasharray 0.7s ease;"/>
+              stroke-dasharray="${pct} 251.2"
+              stroke-dashoffset="62.8"
+              stroke-linecap="round"
+              transform="rotate(-90 45 45)"
+              style="transition: stroke-dasharray 0.7s ease;"></circle>
             <text x="45" y="51" text-anchor="middle" font-size="20" font-weight="500" fill="#1a1a18">${score}</text>
           </svg>
         </div>
@@ -97,9 +99,7 @@
         </div>
         <div class="bcard">
           <div class="blabel">Route efficiency</div>
-          <div style="font-size:11px;color:#6b6b67;margin-top:-2px;margin-bottom:8px;" aria-label="This route score is powered by openrouteservice directions data.">
-            Powered by openrouteservice
-          </div>
+          <div style="font-size:11px;color:#6b6b67;margin-top:-2px;margin-bottom:8px;">Powered by openrouteservice</div>
           <div class="bval" style="color:${barColor(comp.traffic.score)}">${comp.traffic.score}</div>
           <div class="bbar">
             <div class="bfill" style="width:${comp.traffic.score}%;background:${barColor(comp.traffic.score)}"></div>
@@ -124,6 +124,7 @@
       body.innerHTML = '<div class="placeholder">No scores yet</div>';
       return;
     }
+
     body.innerHTML = `
       <div class="hist-row hist-head">
         <div>Origin</div><div>Destination</div><div class="hist-mode">Mode</div><div>Score</div><div>Tier</div>
