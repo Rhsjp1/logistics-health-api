@@ -168,46 +168,54 @@
       const destText = document.getElementById("dest").selectedOptions[0].text;
 
       document.getElementById("result-area").innerHTML = `
-        <div class="score-card">
-          <div class="score-ring">
-            <svg width="90" height="90" viewBox="0 0 90 90">
-              <circle cx="45" cy="45" r="40" fill="none" stroke="#f0f0ee" stroke-width="7"></circle>
-              <circle cx="45" cy="45" r="40" fill="none" stroke="${tier.color}" stroke-width="7"
-                stroke-dasharray="${pct} 251.2" stroke-dashoffset="62.8"
-                stroke-linecap="round" transform="rotate(-90 45 45)"
-                style="transition: stroke-dasharray 0.7s ease;"></circle>
-              <text x="45" y="51" text-anchor="middle" font-size="20" font-weight="500" fill="#1a1a18">${score}</text>
-            </svg>
-          </div>
-          <div class="score-info">
-            <div class="score-tier" style="color: ${tier.color}">${tier.label}</div>
-            <div class="score-lane">${originText.split("—")[0].trim()} → ${destText.split("—")[0].trim()} · ${mode.charAt(0).toUpperCase() + mode.slice(1)}</div>
-            <div class="score-note">Scored at ${new Date().toLocaleTimeString()}</div>
-          </div>
-        </div>
-        <div class="breakdown">
-          <div class="bcard">
-            <div class="blabel">Origin weather score</div>
-            <div class="bval" style="color:${barColor(bd.origin_weather_score)}">${bd.origin_weather_score}</div>
-            <div class="bbar"><div class="bfill" style="width:${bd.origin_weather_score}%;background:${barColor(bd.origin_weather_score)}"></div></div>
-          </div>
-          <div class="bcard">
-            <div class="blabel">Destination weather score</div>
-            <div class="bval" style="color:${barColor(bd.dest_weather_score)}">${bd.dest_weather_score}</div>
-            <div class="bbar"><div class="bfill" style="width:${bd.dest_weather_score}%;background:${barColor(bd.dest_weather_score)}"></div></div>
-          </div>
-          <div class="bcard">
-            <div class="blabel">Route efficiency</div>
-            <div class="bval" style="color:${barColor(comp.traffic.score)}">${comp.traffic.score}</div>
-            <div class="bbar"><div class="bfill" style="width:${comp.traffic.score}%;background:${barColor(comp.traffic.score)}"></div></div>
-          </div>
-          <div class="bcard">
-            <div class="blabel">Mode baseline score</div>
-            <div class="bval" style="color:${barColor(bd.mode_baseline_score)}">${bd.mode_baseline_score}</div>
-            <div class="bbar"><div class="bfill" style="width:${bd.mode_baseline_score}%;background:${barColor(bd.mode_baseline_score)}"></div></div>
-          </div>
-        </div>
-      `;
+  <div class="score-card">
+    <div class="score-ring">
+      <svg width="90" height="90" viewBox="0 0 90 90">
+        <circle cx="45" cy="45" r="40" fill="none" stroke="#f0f0ee" stroke-width="7"/>
+        <circle cx="45" cy="45" r="40" fill="none" stroke="${tier.color}" stroke-width="7"
+          stroke-dasharray="${pct} 251.2" stroke-dashoffset="62.8"
+          stroke-linecap="round" transform="rotate(-90 45 45)"
+          style="transition: stroke-dasharray 0.7s ease;"/>
+        <text x="45" y="51" text-anchor="middle" font-size="20" font-weight="500" fill="#1a1a18">${score}</text>
+      </svg>
+    </div>
+    <div class="score-info">
+      <div class="score-tier" style="color: ${tier.color}">${tier.label}</div>
+      <div class="score-lane">${originText.split("—")[0].trim()} → ${destText.split("—")[0].trim()} &nbsp;·&nbsp; ${mode.charAt(0).toUpperCase() + mode.slice(1)}</div>
+      <div class="score-note">Scored at ${new Date().toLocaleTimeString()}</div>
+    </div>
+  </div>
+  <div class="breakdown">
+    <div class="bcard">
+      <div class="blabel">Origin weather score</div>
+      <div class="bval" style="color:${barColor(bd.origin_weather_score)}">${bd.origin_weather_score}</div>
+      <div class="bbar">
+        <div class="bfill" style="width:${bd.origin_weather_score}%;background:${barColor(bd.origin_weather_score)}"></div>
+      </div>
+    </div>
+    <div class="bcard">
+      <div class="blabel">Destination weather score</div>
+      <div class="bval" style="color:${barColor(bd.dest_weather_score)}">${bd.dest_weather_score}</div>
+      <div class="bbar">
+        <div class="bfill" style="width:${bd.dest_weather_score}%;background:${barColor(bd.dest_weather_score)}"></div>
+      </div>
+    </div>
+    <div class="bcard">
+      <div class="blabel">Route efficiency</div>
+      <div style="font-size:11px;color:#6b6b67;margin-top:-2px;margin-bottom:8px;">Powered by openrouteservice</div>
+      <div class="bval" style="color:${barColor(comp.traffic.score)}">${comp.traffic.score}</div>
+      <div class="bbar">
+        <div class="bfill" style="width:${comp.traffic.score}%;background:${barColor(comp.traffic.score)}"></div>
+      </div>
+    </div>
+    <div class="bcard">
+      <div class="blabel">Mode baseline score</div>
+      <div class="bval" style="color:${barColor(bd.mode_baseline_score)}">${bd.mode_baseline_score}</div>
+      <div class="bbar">
+        <div class="bfill" style="width:${bd.mode_baseline_score}%;background:${barColor(bd.mode_baseline_score)}"></div>
+      </div>
+    </div>
+  </div>`;
 
       history.unshift({ origin, dest, mode, score, tier, time: new Date().toLocaleTimeString() });
       renderHistory();
