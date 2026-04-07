@@ -268,8 +268,7 @@
   }
 
   async function fetchLiveScore(origin, dest, mode) {
-    const url = `${API_BASE_URL}/api/scr?origin=${origin}&dest=${dest}&mode=${mode}`;
-    const res = await fetch(url);
+const url = `${API_BASE_URL}/api/scr?origin=${origin}&dest=${dest}&mode=${mode}&key=rhs_demo_key_001`;    const res = await fetch(url);
     if (!res.ok) throw new Error("API returned " + res.status);
     return res.json();
   }
