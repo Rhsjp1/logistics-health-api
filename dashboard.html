@@ -1,239 +1,365 @@
-const { createClient } = require("@supabase/supabase-js");
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Logistics Health API — SCR Dashboard</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #f9f9f8; --surface: #ffffff; --border: rgba(0,0,0,0.1);
+      --text: #1a1a18; --muted: #6b6b67; --radius: 10px;
+      --green: #22c55e; --lime: #84cc16; --yellow: #eab308;
+      --orange: #f97316; --red: #ef4444;
+    }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; padding: 0; }
+    nav { background: var(--surface); border-bottom: 0.5px solid var(--border); padding: 0 2rem; height: 56px; display: flex; align-items: center; justify-content: space-between; }
+    nav .brand { font-size: 15px; font-weight: 500; }
+    nav .brand span { color: var(--muted); font-weight: 400; }
+    nav .status { font-size: 12px; color: var(--muted); display: flex; align-items: center; gap: 6px; }
+    nav .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--green); }
+    main { max-width: 900px; margin: 0 auto; padding: 2rem 1.5rem; }
+    .controls { background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--radius); padding: 1.25rem; display: grid; grid-template-columns: 1fr 1fr 1fr auto; gap: 12px; align-items: end; margin-bottom: 1.5rem; }
+    .ctrl-group label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 5px; }
+    select { width: 100%; height: 38px; padding: 0 10px; border: 0.5px solid var(--border); border-radius: 7px; background: var(--surface); color: var(--text); font-size: 14px; appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236b6b67' d='M6 8L1 3h10z'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 10px center; cursor: pointer; }
+    button { height: 38px; padding: 0 20px; background: var(--text); color: #fff; border: none; border-radius: 7px; font-size: 14px; font-weight: 500; cursor: pointer; white-space: nowrap; transition: opacity 0.15s; }
+    button:hover { opacity: 0.85; }
+    button:disabled { opacity: 0.5; cursor: not-allowed; }
+    .score-card { background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--radius); padding: 1.5rem; display: flex; align-items: center; gap: 1.5rem; margin-bottom: 1rem; }
+    .score-ring { flex-shrink: 0; }
+    .score-info .score-tier { font-size: 15px; font-weight: 500; margin-bottom: 4px; }
+    .score-info .score-lane { font-size: 13px; color: var(--muted); }
+    .score-info .score-note { font-size: 12px; color: var(--muted); margin-top: 10px; }
+    .breakdown { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 1.5rem; }
+    .bcard { background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--radius); padding: 1rem; }
+    .bcard .blabel { font-size: 12px; color: var(--muted); margin-bottom: 6px; }
+    .bcard .bval { font-size: 24px; font-weight: 500; }
+    .bcard .bbar { height: 4px; border-radius: 2px; background: var(--border); margin-top: 10px; overflow: hidden; }
+    .bcard .bfill { height: 100%; border-radius: 2px; transition: width 0.7s ease; }
+    .history { background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+    .hist-header { display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; border-bottom: 0.5px solid var(--border); }
+    .hist-header h3 { font-size: 13px; font-weight: 500; }
+    .hist-row { display: grid; grid-template-columns: 1fr 1fr 1fr 80px 100px; gap: 8px; padding: 10px 16px; border-bottom: 0.5px solid var(--border); font-size: 13px; align-items: center; }
+    .hist-row:last-child { border-bottom: none; }
+    .hist-head { background: var(--bg); font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; }
+    .pill { display: inline-block; padding: 2px 10px; border-radius: 100px; font-size: 11px; font-weight: 500; }
+    .placeholder { padding: 3rem; text-align: center; color: var(--muted); font-size: 14px; }
+    .api-notice { font-size: 12px; color: var(--muted); margin-top: 1rem; padding: 10px 14px; background: var(--surface); border: 0.5px solid var(--border); border-radius: 7px; }
+    optgroup { font-weight: 600; }
+    @media (max-width: 600px) {
+      .controls { grid-template-columns: 1fr 1fr; }
+      .controls button { grid-column: span 2; }
+      .breakdown { grid-template-columns: 1fr; }
+      .hist-row { grid-template-columns: 1fr 1fr 1fr 70px; }
+      .hist-row .hist-mode { display: none; }
+    }
+  </style>
+</head>
+<body>
+<nav>
+  <div class="brand">Logistics Health API <span>/ SCR Dashboard</span></div>
+  <div class="status"><div class="dot"></div> Live</div>
+</nav>
+<main>
+  <div class="controls">
+    <div class="ctrl-group">
+      <label>Origin</label>
+      <select id="origin">
+        <optgroup label="── Northeast ──">
+          <option value="BOS">BOS — Boston, MA</option>
+          <option value="JFK">JFK — New York, NY</option>
+          <option value="PHL">PHL — Philadelphia, PA</option>
+          <option value="BWI">BWI — Baltimore, MD</option>
+          <option value="DCA">DCA — Washington, DC</option>
+          <option value="BDL">BDL — Hartford, CT</option>
+          <option value="PVD">PVD — Providence, RI</option>
+          <option value="BUF">BUF — Buffalo, NY</option>
+          <option value="ALB">ALB — Albany, NY</option>
+          <option value="PWM">PWM — Portland, ME</option>
+        </optgroup>
+        <optgroup label="── Southeast ──">
+          <option value="ATL">ATL — Atlanta, GA</option>
+          <option value="MIA">MIA — Miami, FL</option>
+          <option value="TPA">TPA — Tampa, FL</option>
+          <option value="MCO">MCO — Orlando, FL</option>
+          <option value="JAX">JAX — Jacksonville, FL</option>
+          <option value="CLT">CLT — Charlotte, NC</option>
+          <option value="RDU">RDU — Raleigh, NC</option>
+          <option value="CHS">CHS — Charleston, SC</option>
+          <option value="SAV">SAV — Savannah, GA</option>
+          <option value="BHM">BHM — Birmingham, AL</option>
+          <option value="MSY">MSY — New Orleans, LA</option>
+          <option value="MEM">MEM — Memphis, TN</option>
+          <option value="BNA">BNA — Nashville, TN</option>
+          <option value="RIC">RIC — Richmond, VA</option>
+        </optgroup>
+        <optgroup label="── Midwest ──">
+          <option value="ORD">ORD — Chicago, IL</option>
+          <option value="DTW">DTW — Detroit, MI</option>
+          <option value="CLE">CLE — Cleveland, OH</option>
+          <option value="CMH">CMH — Columbus, OH</option>
+          <option value="CVG">CVG — Cincinnati, OH</option>
+          <option value="IND">IND — Indianapolis, IN</option>
+          <option value="MKE">MKE — Milwaukee, WI</option>
+          <option value="MSP">MSP — Minneapolis, MN</option>
+          <option value="STL">STL — St. Louis, MO</option>
+          <option value="MCI">MCI — Kansas City, MO</option>
+          <option value="OMA">OMA — Omaha, NE</option>
+          <option value="DSM">DSM — Des Moines, IA</option>
+        </optgroup>
+        <optgroup label="── South Central ──">
+          <option value="DFW">DFW — Dallas, TX</option>
+          <option value="HOU">HOU — Houston, TX</option>
+          <option value="SAT">SAT — San Antonio, TX</option>
+          <option value="AUS">AUS — Austin, TX</option>
+          <option value="ELP">ELP — El Paso, TX</option>
+          <option value="OKC">OKC — Oklahoma City, OK</option>
+          <option value="TUL">TUL — Tulsa, OK</option>
+          <option value="LIT">LIT — Little Rock, AR</option>
+        </optgroup>
+        <optgroup label="── Mountain / Southwest ──">
+          <option value="DEN">DEN — Denver, CO</option>
+          <option value="PHX">PHX — Phoenix, AZ</option>
+          <option value="TUS">TUS — Tucson, AZ</option>
+          <option value="ABQ">ABQ — Albuquerque, NM</option>
+          <option value="SLC">SLC — Salt Lake City, UT</option>
+          <option value="LAS">LAS — Las Vegas, NV</option>
+          <option value="BOI">BOI — Boise, ID</option>
+          <option value="COS">COS — Colorado Springs, CO</option>
+        </optgroup>
+        <optgroup label="── West Coast ──">
+          <option value="LAX">LAX — Los Angeles, CA</option>
+          <option value="SFO">SFO — San Francisco, CA</option>
+          <option value="SAN">SAN — San Diego, CA</option>
+          <option value="SJC">SJC — San Jose, CA</option>
+          <option value="SMF">SMF — Sacramento, CA</option>
+          <option value="SEA">SEA — Seattle, WA</option>
+          <option value="PDX">PDX — Portland, OR</option>
+          <option value="ANC">ANC — Anchorage, AK</option>
+          <option value="HNL">HNL — Honolulu, HI</option>
+        </optgroup>
+      </select>
+    </div>
+    <div class="ctrl-group">
+      <label>Destination</label>
+      <select id="dest">
+        <optgroup label="── Northeast ──">
+          <option value="BOS">BOS — Boston, MA</option>
+          <option value="JFK">JFK — New York, NY</option>
+          <option value="PHL">PHL — Philadelphia, PA</option>
+          <option value="BWI">BWI — Baltimore, MD</option>
+          <option value="DCA">DCA — Washington, DC</option>
+          <option value="BDL">BDL — Hartford, CT</option>
+          <option value="PVD">PVD — Providence, RI</option>
+          <option value="BUF">BUF — Buffalo, NY</option>
+          <option value="ALB">ALB — Albany, NY</option>
+          <option value="PWM">PWM — Portland, ME</option>
+        </optgroup>
+        <optgroup label="── Southeast ──">
+          <option value="ATL">ATL — Atlanta, GA</option>
+          <option value="MIA">MIA — Miami, FL</option>
+          <option value="TPA">TPA — Tampa, FL</option>
+          <option value="MCO">MCO — Orlando, FL</option>
+          <option value="JAX">JAX — Jacksonville, FL</option>
+          <option value="CLT">CLT — Charlotte, NC</option>
+          <option value="RDU">RDU — Raleigh, NC</option>
+          <option value="CHS">CHS — Charleston, SC</option>
+          <option value="SAV">SAV — Savannah, GA</option>
+          <option value="BHM">BHM — Birmingham, AL</option>
+          <option value="MSY">MSY — New Orleans, LA</option>
+          <option value="MEM">MEM — Memphis, TN</option>
+          <option value="BNA">BNA — Nashville, TN</option>
+          <option value="RIC">RIC — Richmond, VA</option>
+        </optgroup>
+        <optgroup label="── Midwest ──">
+          <option value="ORD">ORD — Chicago, IL</option>
+          <option value="DTW">DTW — Detroit, MI</option>
+          <option value="CLE">CLE — Cleveland, OH</option>
+          <option value="CMH">CMH — Columbus, OH</option>
+          <option value="CVG">CVG — Cincinnati, OH</option>
+          <option value="IND">IND — Indianapolis, IN</option>
+          <option value="MKE">MKE — Milwaukee, WI</option>
+          <option value="MSP">MSP — Minneapolis, MN</option>
+          <option value="STL">STL — St. Louis, MO</option>
+          <option value="MCI">MCI — Kansas City, MO</option>
+          <option value="OMA">OMA — Omaha, NE</option>
+          <option value="DSM">DSM — Des Moines, IA</option>
+        </optgroup>
+        <optgroup label="── South Central ──">
+          <option value="DFW">DFW — Dallas, TX</option>
+          <option value="HOU">HOU — Houston, TX</option>
+          <option value="SAT">SAT — San Antonio, TX</option>
+          <option value="AUS">AUS — Austin, TX</option>
+          <option value="ELP">ELP — El Paso, TX</option>
+          <option value="OKC">OKC — Oklahoma City, OK</option>
+          <option value="TUL">TUL — Tulsa, OK</option>
+          <option value="LIT">LIT — Little Rock, AR</option>
+        </optgroup>
+        <optgroup label="── Mountain / Southwest ──">
+          <option value="DEN">DEN — Denver, CO</option>
+          <option value="PHX">PHX — Phoenix, AZ</option>
+          <option value="TUS">TUS — Tucson, AZ</option>
+          <option value="ABQ">ABQ — Albuquerque, NM</option>
+          <option value="SLC">SLC — Salt Lake City, UT</option>
+          <option value="LAS">LAS — Las Vegas, NV</option>
+          <option value="BOI">BOI — Boise, ID</option>
+          <option value="COS">COS — Colorado Springs, CO</option>
+        </optgroup>
+        <optgroup label="── West Coast ──">
+          <option value="LAX">LAX — Los Angeles, CA</option>
+          <option value="SFO">SFO — San Francisco, CA</option>
+          <option value="SAN">SAN — San Diego, CA</option>
+          <option value="SJC">SJC — San Jose, CA</option>
+          <option value="SMF">SMF — Sacramento, CA</option>
+          <option value="SEA">SEA — Seattle, WA</option>
+          <option value="PDX">PDX — Portland, OR</option>
+          <option value="ANC">ANC — Anchorage, AK</option>
+          <option value="HNL">HNL — Honolulu, HI</option>
+        </optgroup>
+      </select>
+    </div>
+    <div class="ctrl-group">
+      <label>Mode</label>
+      <select id="mode">
+        <option value="trucking">Trucking</option>
+        <option value="rail">Rail</option>
+        <option value="air">Air</option>
+        <option value="ocean">Ocean</option>
+        <option value="intermodal">Intermodal</option>
+      </select>
+    </div>
+    <button id="run-btn" onclick="runScore()">Score lane</button>
+  </div>
 
-const CITY_COORDS = {
-  // Northeast
-  BOS: { lat: 42.37, lon: -71.02, name: "Boston, MA" },
-  JFK: { lat: 40.64, lon: -73.78, name: "New York, NY" },
-  PHL: { lat: 39.95, lon: -75.17, name: "Philadelphia, PA" },
-  BWI: { lat: 39.17, lon: -76.67, name: "Baltimore, MD" },
-  DCA: { lat: 38.85, lon: -77.04, name: "Washington, DC" },
-  BDL: { lat: 41.94, lon: -72.68, name: "Hartford, CT" },
-  PVD: { lat: 41.72, lon: -71.43, name: "Providence, RI" },
-  BUF: { lat: 42.94, lon: -78.73, name: "Buffalo, NY" },
-  ALB: { lat: 42.75, lon: -73.80, name: "Albany, NY" },
-  PWM: { lat: 43.65, lon: -70.31, name: "Portland, ME" },
-  // Southeast
-  ATL: { lat: 33.64, lon: -84.43, name: "Atlanta, GA" },
-  MIA: { lat: 25.80, lon: -80.28, name: "Miami, FL" },
-  TPA: { lat: 27.97, lon: -82.53, name: "Tampa, FL" },
-  MCO: { lat: 28.43, lon: -81.31, name: "Orlando, FL" },
-  JAX: { lat: 30.49, lon: -81.69, name: "Jacksonville, FL" },
-  CLT: { lat: 35.21, lon: -80.94, name: "Charlotte, NC" },
-  RDU: { lat: 35.88, lon: -78.79, name: "Raleigh, NC" },
-  CHS: { lat: 32.90, lon: -80.04, name: "Charleston, SC" },
-  SAV: { lat: 32.13, lon: -81.20, name: "Savannah, GA" },
-  BHM: { lat: 33.56, lon: -86.75, name: "Birmingham, AL" },
-  MSY: { lat: 29.99, lon: -90.26, name: "New Orleans, LA" },
-  MEM: { lat: 35.04, lon: -89.98, name: "Memphis, TN" },
-  BNA: { lat: 36.12, lon: -86.68, name: "Nashville, TN" },
-  RIC: { lat: 37.50, lon: -77.32, name: "Richmond, VA" },
-  // Midwest
-  ORD: { lat: 41.98, lon: -87.90, name: "Chicago, IL" },
-  DTW: { lat: 42.21, lon: -83.35, name: "Detroit, MI" },
-  CLE: { lat: 41.41, lon: -81.85, name: "Cleveland, OH" },
-  CMH: { lat: 39.99, lon: -82.89, name: "Columbus, OH" },
-  CVG: { lat: 39.05, lon: -84.67, name: "Cincinnati, OH" },
-  IND: { lat: 39.72, lon: -86.29, name: "Indianapolis, IN" },
-  MKE: { lat: 42.95, lon: -87.90, name: "Milwaukee, WI" },
-  MSP: { lat: 44.88, lon: -93.22, name: "Minneapolis, MN" },
-  STL: { lat: 38.75, lon: -90.37, name: "St. Louis, MO" },
-  MCI: { lat: 39.30, lon: -94.71, name: "Kansas City, MO" },
-  OMA: { lat: 41.30, lon: -95.89, name: "Omaha, NE" },
-  DSM: { lat: 41.53, lon: -93.66, name: "Des Moines, IA" },
-  // South Central
-  DFW: { lat: 32.90, lon: -97.04, name: "Dallas, TX" },
-  HOU: { lat: 29.65, lon: -95.28, name: "Houston, TX" },
-  SAT: { lat: 29.53, lon: -98.47, name: "San Antonio, TX" },
-  AUS: { lat: 30.20, lon: -97.67, name: "Austin, TX" },
-  ELP: { lat: 31.81, lon: -106.38, name: "El Paso, TX" },
-  OKC: { lat: 35.39, lon: -97.60, name: "Oklahoma City, OK" },
-  TUL: { lat: 36.20, lon: -95.89, name: "Tulsa, OK" },
-  LIT: { lat: 34.73, lon: -92.22, name: "Little Rock, AR" },
-  // Mountain / Southwest
-  DEN: { lat: 39.86, lon: -104.67, name: "Denver, CO" },
-  PHX: { lat: 33.44, lon: -112.01, name: "Phoenix, AZ" },
-  TUS: { lat: 32.12, lon: -110.94, name: "Tucson, AZ" },
-  ABQ: { lat: 35.04, lon: -106.61, name: "Albuquerque, NM" },
-  SLC: { lat: 40.79, lon: -111.98, name: "Salt Lake City, UT" },
-  LAS: { lat: 36.08, lon: -115.15, name: "Las Vegas, NV" },
-  BOI: { lat: 43.56, lon: -116.22, name: "Boise, ID" },
-  COS: { lat: 38.81, lon: -104.71, name: "Colorado Springs, CO" },
-  // West Coast
-  LAX: { lat: 33.94, lon: -118.40, name: "Los Angeles, CA" },
-  SFO: { lat: 37.62, lon: -122.38, name: "San Francisco, CA" },
-  SAN: { lat: 32.73, lon: -117.19, name: "San Diego, CA" },
-  SJC: { lat: 37.36, lon: -121.93, name: "San Jose, CA" },
-  SMF: { lat: 38.70, lon: -121.59, name: "Sacramento, CA" },
-  SEA: { lat: 47.45, lon: -122.31, name: "Seattle, WA" },
-  PDX: { lat: 45.59, lon: -122.60, name: "Portland, OR" },
-  ANC: { lat: 61.17, lon: -150.02, name: "Anchorage, AK" },
-  HNL: { lat: 21.32, lon: -157.92, name: "Honolulu, HI" },
-};
+  <div id="result-area">
+    <div class="placeholder">Select a lane above and click Score lane</div>
+  </div>
 
-// ── API Key Auth ──────────────────────────────────────────────
-async function validateApiKey(key) {
-  if (!key) return { valid: false, reason: "No API key provided." };
-  try {
-    const supabase = createClient(
-      process.env.SUPABASE_URL,
-      process.env.SUPABASE_SERVICE_KEY
-    );
-    const { data, error } = await supabase
-      .from("api_keys")
-      .select("id, client_name, active")
-      .eq("key", key)
-      .single();
-    if (error || !data) return { valid: false, reason: "Invalid API key." };
-    if (!data.active)   return { valid: false, reason: "API key is inactive." };
-    return { valid: true, client: data.client_name };
-  } catch (err) {
-    console.error("Key validation error:", err.message);
-    return { valid: false, reason: "Key validation failed." };
+  <div class="history">
+    <div class="hist-header"><h3>Score history</h3></div>
+    <div id="hist-body"><div class="placeholder">No scores yet</div></div>
+  </div>
+
+  <div class="api-notice">
+    <strong>Connected to:</strong> <span id="api-url"></span>
+  </div>
+</main>
+
+<script>
+  const API_BASE_URL = "https://logistics-health-api-9mmt.vercel.app";
+  const history = [];
+
+  document.getElementById("api-url").textContent = API_BASE_URL + "/api/scr";
+  document.getElementById("api-url").style.color = "#22c55e";
+
+  function getTierInfo(score) {
+    if (score >= 85) return { label: "Excellent", color: "#22c55e", pill: "#dcfce7", pillText: "#166534" };
+    if (score >= 70) return { label: "Good",      color: "#84cc16", pill: "#ecfccb", pillText: "#3f6212" };
+    if (score >= 55) return { label: "Fair",      color: "#eab308", pill: "#fef9c3", pillText: "#713f12" };
+    if (score >= 40) return { label: "At Risk",   color: "#f97316", pill: "#ffedd5", pillText: "#7c2d12" };
+    return               { label: "Critical",    color: "#ef4444", pill: "#fee2e2", pillText: "#7f1d1d" };
   }
-}
 
-// ── Weather ───────────────────────────────────────────────────
-async function getWeatherScore(lat, lon) {
-  try {
-    const url =
-      `https://api.open-meteo.com/v1/forecast` +
-      `?latitude=${lat}&longitude=${lon}` +
-      `&current=precipitation,windspeed_10m,weathercode` +
-      `&temperature_unit=fahrenheit`;
-    const res  = await fetch(url);
-    const data = await res.json();
-    const curr = data.current;
-    const wind   = curr.windspeed_10m || 0;
-    const precip = curr.precipitation || 0;
-    const wCode  = curr.weathercode   || 0;
-    let score = 100;
-    if (wind > 40) score -= 30;
-    else if (wind > 25) score -= 15;
-    else if (wind > 15) score -= 5;
-    if (precip > 10) score -= 30;
-    else if (precip > 3) score -= 15;
-    else if (precip > 0) score -= 5;
-    if (wCode >= 95) score -= 25;
-    else if (wCode >= 71) score -= 15;
-    else if (wCode >= 51) score -= 8;
-    return Math.max(0, Math.min(100, score));
-  } catch (err) {
-    console.error("Weather fetch failed:", err.message);
-    return 75;
-  }
-}
-
-// ── Scoring helpers ───────────────────────────────────────────
-function getModeScore(mode) {
-  const modes = { trucking: 80, rail: 85, air: 70, ocean: 65, intermodal: 78 };
-  return modes[(mode || "trucking").toLowerCase()] || 80;
-}
-
-function calcSCRScore(originWeather, destWeather, modeScore) {
-  return Math.round((originWeather + destWeather) / 2 * 0.5 + modeScore * 0.5);
-}
-
-function getScoreLabel(score) {
-  if (score >= 85) return { label: "Excellent", color: "#22c55e" };
-  if (score >= 70) return { label: "Good",      color: "#84cc16" };
-  if (score >= 55) return { label: "Fair",      color: "#eab308" };
-  if (score >= 40) return { label: "At Risk",   color: "#f97316" };
-  return               { label: "Critical",    color: "#ef4444" };
-}
-
-// ── Database ──────────────────────────────────────────────────
-async function saveToDatabase(record) {
-  try {
-    const supabase = createClient(
-      process.env.SUPABASE_URL,
-      process.env.SUPABASE_SERVICE_KEY
-    );
-    const { error } = await supabase.from("lane_scores").insert([record]);
-    if (error) console.error("Supabase insert error:", error.message);
-  } catch (err) {
-    console.error("Supabase connection error:", err.message);
-  }
-}
-
-// ── Main handler ──────────────────────────────────────────────
-module.exports = async function handler(req, res) {
-  res.setHeader("Access-Control-Allow-Origin", "*");
-  res.setHeader("Access-Control-Allow-Methods", "GET, OPTIONS");
-  res.setHeader("Access-Control-Allow-Headers", "x-api-key");
-
-  if (req.method === "OPTIONS") return res.status(200).end();
-  if (req.method !== "GET") {
-    return res.status(405).json({ error: "Method not allowed. Use GET." });
+  function barColor(val) {
+    if (val >= 80) return "#22c55e";
+    if (val >= 65) return "#84cc16";
+    if (val >= 50) return "#eab308";
+    return "#ef4444";
   }
 
-  // ── Check API key ──
-  // Accept key from header (x-api-key) OR query param (?key=)
-  const apiKey = req.headers["x-api-key"] || req.query.key;
-  const auth   = await validateApiKey(apiKey);
-
-  if (!auth.valid) {
-    return res.status(401).json({
-      error: auth.reason,
-      hint: "Pass your API key as ?key=YOUR_KEY or as the x-api-key header.",
-    });
+  async function fetchLiveScore(origin, dest, mode) {
+    const url = `${API_BASE_URL}/api/scr?origin=${origin}&dest=${dest}&mode=${mode}`;
+    const res = await fetch(url);
+    if (!res.ok) throw new Error("API returned " + res.status);
+    return res.json();
   }
 
-  // ── Route params ──
-  const { origin, dest, mode } = req.query;
+  async function runScore() {
+    const origin = document.getElementById("origin").value;
+    const dest   = document.getElementById("dest").value;
+    const mode   = document.getElementById("mode").value;
+    const btn    = document.getElementById("run-btn");
 
-  if (!origin || !dest) {
-    return res.status(400).json({
-      error: "Missing required parameters.",
-      usage: "/api/scr?origin=PHL&dest=LAX&mode=trucking&key=YOUR_KEY",
-      available_origins: Object.keys(CITY_COORDS),
-    });
+    if (origin === dest) { alert("Origin and destination must be different."); return; }
+
+    btn.disabled = true;
+    btn.textContent = "Scoring...";
+
+    let data;
+    try {
+      data = await fetchLiveScore(origin, dest, mode);
+    } catch (err) {
+      alert("API error: " + err.message);
+      btn.disabled = false;
+      btn.textContent = "Score lane";
+      return;
+    }
+
+    btn.disabled = false;
+    btn.textContent = "Score lane";
+
+    const score = data.scr_score;
+    const tier  = getTierInfo(score);
+    const bd    = data.breakdown;
+    const pct   = (score / 100) * 251.2;
+    const originText = document.getElementById("origin").selectedOptions[0].text;
+    const destText   = document.getElementById("dest").selectedOptions[0].text;
+
+    document.getElementById("result-area").innerHTML = `
+      <div class="score-card">
+        <div class="score-ring">
+          <svg width="90" height="90" viewBox="0 0 90 90">
+            <circle cx="45" cy="45" r="40" fill="none" stroke="#f0f0ee" stroke-width="7"/>
+            <circle cx="45" cy="45" r="40" fill="none" stroke="${tier.color}" stroke-width="7"
+              stroke-dasharray="${pct} 251.2" stroke-dashoffset="62.8"
+              stroke-linecap="round" transform="rotate(-90 45 45)"
+              style="transition: stroke-dasharray 0.7s ease;"/>
+            <text x="45" y="51" text-anchor="middle" font-size="20" font-weight="500" fill="#1a1a18">${score}</text>
+          </svg>
+        </div>
+        <div class="score-info">
+          <div class="score-tier" style="color: ${tier.color}">${tier.label}</div>
+          <div class="score-lane">${originText.split("—")[0].trim()} → ${destText.split("—")[0].trim()} &nbsp;·&nbsp; ${mode.charAt(0).toUpperCase() + mode.slice(1)}</div>
+          <div class="score-note">Scored at ${new Date().toLocaleTimeString()}</div>
+        </div>
+      </div>
+      <div class="breakdown">
+        <div class="bcard">
+          <div class="blabel">Origin weather score</div>
+          <div class="bval" style="color:${barColor(bd.origin_weather_score)}">${bd.origin_weather_score}</div>
+          <div class="bbar"><div class="bfill" style="width:${bd.origin_weather_score}%;background:${barColor(bd.origin_weather_score)}"></div></div>
+        </div>
+        <div class="bcard">
+          <div class="blabel">Destination weather score</div>
+          <div class="bval" style="color:${barColor(bd.dest_weather_score)}">${bd.dest_weather_score}</div>
+          <div class="bbar"><div class="bfill" style="width:${bd.dest_weather_score}%;background:${barColor(bd.dest_weather_score)}"></div></div>
+        </div>
+        <div class="bcard">
+          <div class="blabel">Mode baseline score</div>
+          <div class="bval" style="color:${barColor(bd.mode_baseline_score)}">${bd.mode_baseline_score}</div>
+          <div class="bbar"><div class="bfill" style="width:${bd.mode_baseline_score}%;background:${barColor(bd.mode_baseline_score)}"></div></div>
+        </div>
+      </div>`;
+
+    history.unshift({ origin, dest, mode, score, tier, time: new Date().toLocaleTimeString() });
+    renderHistory();
   }
 
-  const originKey  = origin.toUpperCase();
-  const destKey    = dest.toUpperCase();
-  const originCity = CITY_COORDS[originKey];
-  const destCity   = CITY_COORDS[destKey];
-
-  if (!originCity) return res.status(400).json({ error: `Unknown origin: ${originKey}`, available_codes: Object.keys(CITY_COORDS) });
-  if (!destCity)   return res.status(400).json({ error: `Unknown dest: ${destKey}`,   available_codes: Object.keys(CITY_COORDS) });
-
-  // ── Score ──
-  const [originWeather, destWeather] = await Promise.all([
-    getWeatherScore(originCity.lat, originCity.lon),
-    getWeatherScore(destCity.lat,   destCity.lon),
-  ]);
-
-  const modeScore = getModeScore(mode);
-  const scrScore  = calcSCRScore(originWeather, destWeather, modeScore);
-  const tier      = getScoreLabel(scrScore);
-
-  const result = {
-    scr_score:  scrScore,
-    tier:       tier.label,
-    tier_color: tier.color,
-    client:     auth.client,
-    lane: {
-      origin:      originKey,
-      origin_name: originCity.name,
-      dest:        destKey,
-      dest_name:   destCity.name,
-      mode:        (mode || "trucking").toLowerCase(),
-    },
-    breakdown: {
-      origin_weather_score: originWeather,
-      dest_weather_score:   destWeather,
-      mode_baseline_score:  modeScore,
-    },
-    generated_at: new Date().toISOString(),
-    version: "1.0.0",
-  };
-
-  await saveToDatabase({
-    origin:      originKey,
-    destination: destKey,
-    mode:        result.lane.mode,
-    score:       scrScore,
-  });
-
-  return res.status(200).json(result);
-};
+  function renderHistory() {
+    const body = document.getElementById("hist-body");
+    if (!history.length) { body.innerHTML = '<div class="placeholder">No scores yet</div>'; return; }
+    body.innerHTML = `
+      <div class="hist-row hist-head">
+        <div>Origin</div><div>Destination</div><div class="hist-mode">Mode</div><div>Score</div><div>Tier</div>
+      </div>` +
+      history.slice(0, 10).map(r => `
+      <div class="hist-row">
+        <div>${r.origin}</div><div>${r.dest}</div>
+        <div class="hist-mode" style="text-transform:capitalize">${r.mode}</div>
+        <div style="font-weight:500">${r.score}</div>
+        <div><span class="pill" style="background:${r.tier.pill};color:${r.tier.pillText}">${r.tier.label}</span></div>
+      </div>`).join("");
+  }
+</script>
+</body>
+</html>
