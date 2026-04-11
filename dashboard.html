@@ -3,112 +3,137 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Logistics Health Dashboard</title>
+  <title>Shipment Health Dashboard</title>
   <style>
-    * { box-sizing: border-box; }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #f9f9f8;
+      --surface: #ffffff;
+      --border: rgba(0,0,0,0.1);
+      --text: #1a1a18;
+      --muted: #6b6b67;
+      --green: #22c55e;
+      --lime: #84cc16;
+      --yellow: #eab308;
+      --orange: #f97316;
+      --red: #ef4444;
+      --radius: 12px;
+    }
     body {
-      margin: 0;
-      font-family: Arial, sans-serif;
-      background: linear-gradient(135deg, #0f172a, #1e293b);
-      color: #e2e8f0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: var(--bg);
+      color: var(--text);
       min-height: 100vh;
+      padding: 32px 20px;
     }
     .wrap {
       max-width: 1100px;
       margin: 0 auto;
-      padding: 32px 20px 48px;
     }
-    h1 {
-      margin: 0 0 8px;
-      font-size: 32px;
+    .topbar {
+      margin-bottom: 20px;
     }
-    .sub {
-      margin: 0 0 28px;
-      color: #94a3b8;
+    .title {
+      font-size: 28px;
+      font-weight: 700;
+      margin-bottom: 6px;
     }
-    .cards {
+    .subtitle {
+      color: var(--muted);
+      font-size: 14px;
+    }
+    .stats {
       display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 16px;
-      margin-bottom: 28px;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
+      margin: 24px 0;
     }
     .card {
-      background: rgba(255,255,255,0.08);
-      border: 1px solid rgba(255,255,255,0.08);
-      border-radius: 16px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
       padding: 18px;
-      backdrop-filter: blur(8px);
     }
-    .label {
+    .stat-label {
       font-size: 12px;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-      color: #94a3b8;
+      color: var(--muted);
       margin-bottom: 10px;
+      letter-spacing: 0.02em;
     }
-    .value {
+    .stat-value {
       font-size: 32px;
       font-weight: 700;
-      color: #f8fafc;
     }
     .panel {
-      background: rgba(255,255,255,0.08);
-      border: 1px solid rgba(255,255,255,0.08);
-      border-radius: 16px;
-      padding: 18px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
       overflow: hidden;
     }
-    .panel h2 {
-      margin: 0 0 16px;
-      font-size: 20px;
+    .panel-head {
+      padding: 16px 18px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
     }
-    .status {
-      margin: 0 0 16px;
-      color: #cbd5e1;
+    .panel-head h2 {
+      font-size: 18px;
+      font-weight: 600;
     }
-    .error {
-      margin: 0 0 16px;
-      padding: 12px 14px;
-      border-radius: 12px;
-      background: rgba(239,68,68,0.15);
-      border: 1px solid rgba(239,68,68,0.35);
-      color: #fecaca;
+    .panel-head .hint {
+      font-size: 12px;
+      color: var(--muted);
+    }
+    .error-box {
+      display: none;
       white-space: pre-wrap;
+      margin: 16px 18px 0;
+      background: #fff7ed;
+      color: #9a3412;
+      border: 1px solid #fdba74;
+      border-radius: 10px;
+      padding: 12px 14px;
+      font-size: 13px;
+      line-height: 1.5;
     }
     table {
       width: 100%;
       border-collapse: collapse;
-      color: #e2e8f0;
     }
     th, td {
       text-align: left;
-      padding: 12px 10px;
-      border-bottom: 1px solid rgba(255,255,255,0.08);
-      vertical-align: top;
+      padding: 14px 18px;
+      border-top: 1px solid var(--border);
+      font-size: 14px;
     }
     th {
-      color: #94a3b8;
+      color: var(--muted);
       font-size: 12px;
       text-transform: uppercase;
-      letter-spacing: 0.08em;
+      letter-spacing: 0.04em;
+      background: #fcfcfb;
     }
-    .muted {
-      color: #94a3b8;
+    .pill {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 600;
     }
-    .hidden {
-      display: none;
+    .empty {
+      padding: 24px 18px;
+      color: var(--muted);
+      font-size: 14px;
     }
     .footer-note {
-      margin-top: 16px;
-      font-size: 13px;
-      color: #94a3b8;
+      margin-top: 14px;
+      font-size: 12px;
+      color: var(--muted);
     }
     @media (max-width: 800px) {
-      .cards {
+      .stats {
         grid-template-columns: 1fr;
-      }
-      .value {
-        font-size: 28px;
       }
       table, thead, tbody, th, td, tr {
         display: block;
@@ -117,164 +142,163 @@
         display: none;
       }
       tr {
-        margin-bottom: 12px;
-        border: 1px solid rgba(255,255,255,0.08);
-        border-radius: 12px;
-        padding: 8px;
-        background: rgba(255,255,255,0.04);
+        border-top: 1px solid var(--border);
+        padding: 10px 0;
       }
       td {
-        border-bottom: none;
-        padding: 8px;
+        border-top: none;
+        padding: 6px 18px;
       }
       td::before {
         content: attr(data-label);
         display: block;
-        font-size: 12px;
+        font-size: 11px;
+        color: var(--muted);
         text-transform: uppercase;
-        letter-spacing: 0.08em;
-        color: #94a3b8;
-        margin-bottom: 4px;
+        margin-bottom: 2px;
       }
     }
   </style>
 </head>
 <body>
   <div class="wrap">
-    <h1>🚚 Logistics Health Dashboard</h1>
-    <p class="sub">Real-time route and shipment health metrics</p>
+    <div class="topbar">
+      <div class="title">Real-time route and shipment health metrics</div>
+      <div class="subtitle">Live dashboard powered by your Vercel API route and Supabase-backed data.</div>
+    </div>
 
-    <div class="cards">
+    <div class="stats">
       <div class="card">
-        <div class="label">Total Routes</div>
-        <div class="value" id="totalRoutes">—</div>
+        <div class="stat-label">TOTAL ROUTES</div>
+        <div class="stat-value" id="total-routes">—</div>
       </div>
       <div class="card">
-        <div class="label">Avg Health Score</div>
-        <div class="value" id="avgScore">—</div>
+        <div class="stat-label">AVG HEALTH SCORE</div>
+        <div class="stat-value" id="avg-score">—</div>
       </div>
       <div class="card">
-        <div class="label">Recent Records</div>
-        <div class="value" id="recentCount">—</div>
+        <div class="stat-label">RECENT RECORDS</div>
+        <div class="stat-value" id="recent-records">—</div>
       </div>
     </div>
 
     <div class="panel">
-      <h2>Route History</h2>
-      <div id="loading" class="status">Loading dashboard data...</div>
-      <div id="error"></div>
-
-      <table id="historyTable" class="hidden">
-        <thead>
-          <tr>
-            <th>Lane</th>
-            <th>Mode</th>
-            <th>Score</th>
-            <th>Timestamp</th>
-          </tr>
-        </thead>
-        <tbody id="tableBody"></tbody>
-      </table>
-
-      <div class="footer-note">
-        If this table stays empty, the API is likely rejecting the request or returning no rows.
+      <div class="panel-head">
+        <h2>Route History</h2>
+        <div class="hint">Latest 25 rows</div>
       </div>
+
+      <div id="error-box" class="error-box"></div>
+
+      <div id="table-wrap">
+        <table id="history-table">
+          <thead>
+            <tr>
+              <th>Origin</th>
+              <th>Destination</th>
+              <th>Mode</th>
+              <th>Score</th>
+              <th>Tier</th>
+              <th>Timestamp</th>
+            </tr>
+          </thead>
+          <tbody id="history-body">
+            <tr>
+              <td colspan="6" class="empty">Loading dashboard…</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="footer-note">
+      If this table stays empty, the API is likely rejecting the request or returning no rows.
     </div>
   </div>
 
   <script>
-    const API_KEY = "REPLACE_WITH_YOUR_LOGISTICS_API_KEY";
-
-    async function loadDashboard() {
-      const loading = document.getElementById("loading");
-      const error = document.getElementById("error");
-      const historyTable = document.getElementById("historyTable");
-
-      loading.classList.remove("hidden");
-      historyTable.classList.add("hidden");
-      error.innerHTML = "";
-
-      try {
-        const url = `/api/history?key=${encodeURIComponent(API_KEY)}`;
-        const response = await fetch(url);
-
-        if (!response.ok) {
-          const text = await response.text();
-          throw new Error(`HTTP ${response.status}\n${text}`);
-        }
-
-        const data = await response.json();
-        const rows = Array.isArray(data.rows) ? data.rows : [];
-
-        renderDashboard(rows);
-
-        loading.classList.add("hidden");
-        historyTable.classList.remove("hidden");
-      } catch (err) {
-        loading.classList.add("hidden");
-        error.innerHTML = `<div class="error">Error loading dashboard:\n${err.message}</div>`;
-      }
+    function scoreTier(score) {
+      if (score >= 85) return { label: "Excellent", bg: "#dcfce7", text: "#166534" };
+      if (score >= 70) return { label: "Good", bg: "#ecfccb", text: "#3f6212" };
+      if (score >= 55) return { label: "Fair", bg: "#fef9c3", text: "#713f12" };
+      if (score >= 40) return { label: "At Risk", bg: "#ffedd5", text: "#7c2d12" };
+      return { label: "Critical", bg: "#fee2e2", text: "#7f1d1d" };
     }
 
-    function renderDashboard(rows) {
-      document.getElementById("totalRoutes").textContent = rows.length;
+    function formatTime(ts) {
+      if (!ts) return "—";
+      const d = new Date(ts);
+      if (Number.isNaN(d.getTime())) return ts;
+      return d.toLocaleString();
+    }
 
-      const validScores = rows
-        .map(r => Number(r.score))
-        .filter(s => !Number.isNaN(s));
+    async function loadDashboard() {
+      const errorBox = document.getElementById("error-box");
+      const tbody = document.getElementById("history-body");
 
-      const avgScore = validScores.length
-        ? (validScores.reduce((a, b) => a + b, 0) / validScores.length).toFixed(1)
-        : "—";
+      errorBox.style.display = "none";
+      errorBox.textContent = "";
 
-      document.getElementById("avgScore").textContent = avgScore;
+      try {
+        const res = await fetch("/api/history");
+        if (!res.ok) {
+          const text = await res.text();
+          throw new Error(`HTTP ${res.status}\n${text}`);
+        }
 
-      const oneHourAgo = new Date(Date.now() - 3600000);
+        const payload = await res.json();
+        const rows = Array.isArray(payload.rows) ? payload.rows : [];
 
-      const recentCount = rows.filter(r => {
-        const ts = r.timestamp || r.created_at;
-        return ts && !isNaN(Date.parse(ts)) && new Date(ts) > oneHourAgo;
-      }).length;
+        document.getElementById("total-routes").textContent = payload.total_routes ?? rows.length ?? "—";
+        document.getElementById("avg-score").textContent = payload.avg_health_score ?? "—";
+        document.getElementById("recent-records").textContent = payload.recent_records ?? rows.length ?? "—";
 
-      document.getElementById("recentCount").textContent = recentCount;
+        if (!rows.length) {
+          tbody.innerHTML = `
+            <tr>
+              <td colspan="6" class="empty">No route history returned yet.</td>
+            </tr>
+          `;
+          return;
+        }
 
-      const tableBody = document.getElementById("tableBody");
+        tbody.innerHTML = rows.map((row) => {
+          const score = Number(row.scr_score ?? row.score ?? 0);
+          const tier = scoreTier(score);
+          return `
+            <tr>
+              <td data-label="Origin">${row.origin ?? "—"}</td>
+              <td data-label="Destination">${row.dest ?? row.destination ?? "—"}</td>
+              <td data-label="Mode">${row.mode ?? "—"}</td>
+              <td data-label="Score">${score || 0}</td>
+              <td data-label="Tier">
+                <span class="pill" style="background:${tier.bg};color:${tier.text}">
+                  ${tier.label}
+                </span>
+              </td>
+              <td data-label="Timestamp">${formatTime(row.created_at ?? row.timestamp ?? row.scored_at)}</td>
+            </tr>
+          `;
+        }).join("");
+      } catch (err) {
+        document.getElementById("total-routes").textContent = "—";
+        document.getElementById("avg-score").textContent = "—";
+        document.getElementById("recent-records").textContent = "—";
 
-      if (!rows.length) {
-        tableBody.innerHTML = `
+        tbody.innerHTML = `
           <tr>
-            <td data-label="Lane" colspan="4" class="muted">No history rows returned yet.</td>
+            <td colspan="6" class="empty">Dashboard could not load rows.</td>
           </tr>
         `;
-        return;
+
+        errorBox.style.display = "block";
+        errorBox.textContent =
+          "Error loading dashboard:\n" + err.message +
+          "\n\nIf this table stays empty, the API is likely rejecting the request or returning no rows.";
       }
-
-      tableBody.innerHTML = rows.map(row => {
-        const lane =
-          row.lane ||
-          (row.origin && row.destination ? `${row.origin} → ${row.destination}` : "—");
-
-        const mode = row.mode || "—";
-        const score = row.score ?? "—";
-
-        const rawTime = row.timestamp || row.created_at;
-        const time = rawTime && !isNaN(Date.parse(rawTime))
-          ? new Date(rawTime).toLocaleString()
-          : "—";
-
-        return `
-          <tr>
-            <td data-label="Lane">${lane}</td>
-            <td data-label="Mode">${mode}</td>
-            <td data-label="Score">${score}</td>
-            <td data-label="Timestamp">${time}</td>
-          </tr>
-        `;
-      }).join("");
     }
 
     loadDashboard();
-    setInterval(loadDashboard, 30000);
   </script>
 </body>
 </html>
