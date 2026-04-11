@@ -1,194 +1,280 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Logistics Health Dashboard</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            padding: 20px;
-        }
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            background: white;
-            border-radius: 12px;
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
-            padding: 30px;
-        }
-        h1 {
-            color: #333;
-            margin-bottom: 10px;
-            font-size: 28px;
-        }
-        .status {
-            display: flex;
-            gap: 20px;
-            margin-bottom: 30px;
-            flex-wrap: wrap;
-        }
-        .status-card {
-            flex: 1;
-            min-width: 200px;
-            padding: 15px;
-            background: #f5f5f5;
-            border-radius: 8px;
-            border-left: 4px solid #667eea;
-        }
-        .status-card.success {
-            border-left-color: #10b981;
-        }
-        .status-card.warning {
-            border-left-color: #f59e0b;
-        }
-        .status-label {
-            font-size: 12px;
-            color: #666;
-            text-transform: uppercase;
-            font-weight: 600;
-            margin-bottom: 5px;
-        }
-        .status-value {
-            font-size: 24px;
-            font-weight: bold;
-            color: #333;
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 20px;
-        }
-        thead {
-            background: #f9fafb;
-            border-bottom: 2px solid #e5e7eb;
-        }
-        th {
-            padding: 12px;
-            text-align: left;
-            font-weight: 600;
-            color: #374151;
-            font-size: 14px;
-        }
-        td {
-            padding: 12px;
-            border-bottom: 1px solid #e5e7eb;
-            color: #555;
-        }
-        tr:hover {
-            background: #f9fafb;
-        }
-        .loading {
-            text-align: center;
-            padding: 40px;
-            color: #999;
-            font-size: 16px;
-        }
-        .error {
-            background: #fee2e2;
-            color: #991b1b;
-            padding: 15px;
-            border-radius: 8px;
-            margin: 20px 0;
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Logistics Health Dashboard</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: linear-gradient(135deg, #0f172a, #1e293b);
+      color: #e2e8f0;
+      min-height: 100vh;
+    }
+    .wrap {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 32px 20px 48px;
+    }
+    h1 {
+      margin: 0 0 8px;
+      font-size: 32px;
+    }
+    .sub {
+      margin: 0 0 28px;
+      color: #94a3b8;
+    }
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 16px;
+      margin-bottom: 28px;
+    }
+    .card {
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 16px;
+      padding: 18px;
+      backdrop-filter: blur(8px);
+    }
+    .label {
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #94a3b8;
+      margin-bottom: 10px;
+    }
+    .value {
+      font-size: 32px;
+      font-weight: 700;
+      color: #f8fafc;
+    }
+    .panel {
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 16px;
+      padding: 18px;
+      overflow: hidden;
+    }
+    .panel h2 {
+      margin: 0 0 16px;
+      font-size: 20px;
+    }
+    .status {
+      margin: 0 0 16px;
+      color: #cbd5e1;
+    }
+    .error {
+      margin: 0 0 16px;
+      padding: 12px 14px;
+      border-radius: 12px;
+      background: rgba(239,68,68,0.15);
+      border: 1px solid rgba(239,68,68,0.35);
+      color: #fecaca;
+      white-space: pre-wrap;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      color: #e2e8f0;
+    }
+    th, td {
+      text-align: left;
+      padding: 12px 10px;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+      vertical-align: top;
+    }
+    th {
+      color: #94a3b8;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+    .muted {
+      color: #94a3b8;
+    }
+    .hidden {
+      display: none;
+    }
+    .footer-note {
+      margin-top: 16px;
+      font-size: 13px;
+      color: #94a3b8;
+    }
+    @media (max-width: 800px) {
+      .cards {
+        grid-template-columns: 1fr;
+      }
+      .value {
+        font-size: 28px;
+      }
+      table, thead, tbody, th, td, tr {
+        display: block;
+      }
+      thead {
+        display: none;
+      }
+      tr {
+        margin-bottom: 12px;
+        border: 1px solid rgba(255,255,255,0.08);
+        border-radius: 12px;
+        padding: 8px;
+        background: rgba(255,255,255,0.04);
+      }
+      td {
+        border-bottom: none;
+        padding: 8px;
+      }
+      td::before {
+        content: attr(data-label);
+        display: block;
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: #94a3b8;
+        margin-bottom: 4px;
+      }
+    }
+  </style>
 </head>
 <body>
-    <div class="container">
-        <h1>🚚 Logistics Health Dashboard</h1>
-        <p style="color: #666; margin-bottom: 20px;">Real-time route and shipment health metrics</p>
-        
-        <div class="status">
-            <div class="status-card success">
-                <div class="status-label">Total Routes</div>
-                <div class="status-value" id="totalRoutes">—</div>
-            </div>
-            <div class="status-card">
-                <div class="status-label">Avg Health Score</div>
-                <div class="status-value" id="avgScore">—</div>
-            </div>
-            <div class="status-card warning">
-                <div class="status-label">Recent Records</div>
-                <div class="status-value" id="recentCount">—</div>
-            </div>
-        </div>
+  <div class="wrap">
+    <h1>🚚 Logistics Health Dashboard</h1>
+    <p class="sub">Real-time route and shipment health metrics</p>
 
-        <h2 style="margin-top: 30px; color: #333; font-size: 18px; margin-bottom: 15px;">Route History</h2>
-        <div id="loading" class="loading">Loading data...</div>
-        <div id="error"></div>
-        <table id="historyTable" style="display: none;">
-            <thead>
-                <tr>
-                    <th>Route</th>
-                    <th>Mode</th>
-                    <th>Health Score</th>
-                    <th>Created</th>
-                </tr>
-            </thead>
-            <tbody id="tableBody"></tbody>
-        </table>
+    <div class="cards">
+      <div class="card">
+        <div class="label">Total Routes</div>
+        <div class="value" id="totalRoutes">—</div>
+      </div>
+      <div class="card">
+        <div class="label">Avg Health Score</div>
+        <div class="value" id="avgScore">—</div>
+      </div>
+      <div class="card">
+        <div class="label">Recent Records</div>
+        <div class="value" id="recentCount">—</div>
+      </div>
     </div>
 
-    <script>
-        async function loadDashboard() {
-            try {
-                const response = await fetch('/api/history');
-                if (!response.ok) throw new Error('Failed to fetch data');
-                
-                const data = await response.json();
-                renderDashboard(data);
-            } catch (error) {
-                document.getElementById('error').innerHTML = `
-                    <div class="error">Error loading dashboard: ${error.message}</div>
-                `;
-                document.getElementById('loading').style.display = 'none';
-            }
+    <div class="panel">
+      <h2>Route History</h2>
+      <div id="loading" class="status">Loading dashboard data...</div>
+      <div id="error"></div>
+
+      <table id="historyTable" class="hidden">
+        <thead>
+          <tr>
+            <th>Lane</th>
+            <th>Mode</th>
+            <th>Score</th>
+            <th>Timestamp</th>
+          </tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+
+      <div class="footer-note">
+        If this table stays empty, the API is likely rejecting the request or returning no rows.
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const API_KEY = "REPLACE_WITH_YOUR_LOGISTICS_API_KEY";
+
+    async function loadDashboard() {
+      const loading = document.getElementById("loading");
+      const error = document.getElementById("error");
+      const historyTable = document.getElementById("historyTable");
+
+      loading.classList.remove("hidden");
+      historyTable.classList.add("hidden");
+      error.innerHTML = "";
+
+      try {
+        const url = `/api/history?key=${encodeURIComponent(API_KEY)}`;
+        const response = await fetch(url);
+
+        if (!response.ok) {
+          const text = await response.text();
+          throw new Error(`HTTP ${response.status}\n${text}`);
         }
 
-        function renderDashboard(rows) {
-            document.getElementById('loading').style.display = 'none';
-            document.getElementById('historyTable').style.display = 'table';
+        const data = await response.json();
+        const rows = Array.isArray(data.rows) ? data.rows : [];
 
-            // Update status cards
-            document.getElementById('totalRoutes').textContent = rows.length;
-            
-            const validScores = rows
-                .map(r => r.score)
-                .filter(s => s !== null && s !== undefined && !isNaN(s));
-            const avgScore = validScores.length > 0 
-                ? (validScores.reduce((a, b) => a + b, 0) / validScores.length).toFixed(1)
-                : '—';
-            document.getElementById('avgScore').textContent = avgScore;
-            
-            const oneHourAgo = new Date(Date.now() - 3600000);
-            const recentCount = rows.filter(r => 
-                r.created_at && new Date(r.created_at) > oneHourAgo
-            ).length;
-            document.getElementById('recentCount').textContent = recentCount;
+        renderDashboard(rows);
 
-            // Render table rows
-            const tableBody = document.getElementById('tableBody');
-            tableBody.innerHTML = rows.map(row => `
-                <tr>
-                    <td>${row.origin} → ${row.destination}</td>
-                    <td>${row.mode || "—"}</td>
-                    <td>${row.score ?? "—"}</td>
-                    <td>${row.created_at ? new Date(row.created_at).toLocaleString() : "—"}</td>
-                </tr>
-            `).join("");
-        }
+        loading.classList.add("hidden");
+        historyTable.classList.remove("hidden");
+      } catch (err) {
+        loading.classList.add("hidden");
+        error.innerHTML = `<div class="error">Error loading dashboard:\n${err.message}</div>`;
+      }
+    }
 
-        // Load dashboard on page load
-        loadDashboard();
-        // Refresh every 30 seconds
-        setInterval(loadDashboard, 30000);
-    </script>
+    function renderDashboard(rows) {
+      document.getElementById("totalRoutes").textContent = rows.length;
+
+      const validScores = rows
+        .map(r => Number(r.score))
+        .filter(s => !Number.isNaN(s));
+
+      const avgScore = validScores.length
+        ? (validScores.reduce((a, b) => a + b, 0) / validScores.length).toFixed(1)
+        : "—";
+
+      document.getElementById("avgScore").textContent = avgScore;
+
+      const oneHourAgo = new Date(Date.now() - 3600000);
+
+      const recentCount = rows.filter(r => {
+        const ts = r.timestamp || r.created_at;
+        return ts && !isNaN(Date.parse(ts)) && new Date(ts) > oneHourAgo;
+      }).length;
+
+      document.getElementById("recentCount").textContent = recentCount;
+
+      const tableBody = document.getElementById("tableBody");
+
+      if (!rows.length) {
+        tableBody.innerHTML = `
+          <tr>
+            <td data-label="Lane" colspan="4" class="muted">No history rows returned yet.</td>
+          </tr>
+        `;
+        return;
+      }
+
+      tableBody.innerHTML = rows.map(row => {
+        const lane =
+          row.lane ||
+          (row.origin && row.destination ? `${row.origin} → ${row.destination}` : "—");
+
+        const mode = row.mode || "—";
+        const score = row.score ?? "—";
+
+        const rawTime = row.timestamp || row.created_at;
+        const time = rawTime && !isNaN(Date.parse(rawTime))
+          ? new Date(rawTime).toLocaleString()
+          : "—";
+
+        return `
+          <tr>
+            <td data-label="Lane">${lane}</td>
+            <td data-label="Mode">${mode}</td>
+            <td data-label="Score">${score}</td>
+            <td data-label="Timestamp">${time}</td>
+          </tr>
+        `;
+      }).join("");
+    }
+
+    loadDashboard();
+    setInterval(loadDashboard, 30000);
+  </script>
 </body>
 </html>
